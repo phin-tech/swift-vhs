@@ -42,6 +42,10 @@ init() {
 
 An app can add commands of its own: `VHS.command("open", help: "open <file>  opens a document") { rest in … }`.
 
+An app that plays sound can say so, and a recording running then has it as a `sound` event, which demoreel plays under
+the clip: `VHS.noteSound(url, from: 2.5)` when a take starts playing. A `menu` line that chooses an item is noted too
+(`{"kind":"menu","path":"File > Save"}`), since a menu itself is drawn outside the window and isn't in the frames.
+
 ## Drive it
 
 ```sh
@@ -93,6 +97,9 @@ for something private such as the microphone. Booth's `scripts/driven` is an exa
 - **Recordings** take a frame on the main run loop as often as the rate asks and write PNGs on other threads. A frame
   that took longer than the interval is saved as many times as frames were due, so the video keeps the app's pace.
   Events are noted on the next frame saved. Frames are numbered from 00000, as events.json counts them.
+  A locked screen or a sleeping display draws every window blank, so `shot` and `record` refuse then and say so.
+- **Which window** a command acts on is the front one that can become key (or the one `window N` chose): a tooltip,
+  or the Writing Tools button macOS puts beside selected text, is a window of its own in front, and is passed over.
 - **Finding things** goes through the accessibility API on the app's own process, which needs no Accessibility
   permission. Asking that way is also what makes SwiftUI build its accessibility tree, which it leaves empty until
   something asks. A label that isn't there yet is looked for again for a second and a half, since SwiftUI updates the

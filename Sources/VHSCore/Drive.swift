@@ -227,6 +227,10 @@ public enum Drive {
         case hover(x: Double, y: Double)
         case scroll(x: Double, y: Double, dy: Double)
         case drag(x: Double, y: Double, x2: Double, y2: Double)
+        /// A menu item chosen (`menu File > Save`), its path as the menu bar shows it.
+        case menu([String])
+        /// A sound the app played (a file, from `from` seconds into it, for `seconds` or to its end), noted by the app.
+        case sound(file: String, from: Double, seconds: Double?)
     }
 
     /// What a clean recording says was done on which frame, in the shape demoreel reads:
@@ -254,6 +258,11 @@ public enum Drive {
                 lines.append(#"{"frame":\#(frame),"kind":"scroll","x":\#(n(x)),"y":\#(n(y)),"dy":\#(n(dy))}"#)
             case .drag(let x, let y, let x2, let y2):
                 lines.append(#"{"frame":\#(frame),"kind":"drag","x":\#(n(x)),"y":\#(n(y)),"x2":\#(n(x2)),"y2":\#(n(y2))}"#)
+            case .menu(let path):
+                lines.append(#"{"frame":\#(frame),"kind":"menu","path":\#(text(path.joined(separator: " > ")))}"#)
+            case .sound(let file, let from, let seconds):
+                let length = seconds.map { #","seconds":\#(n($0))"# } ?? ""
+                lines.append(#"{"frame":\#(frame),"kind":"sound","file":\#(text(file)),"from":\#(n(from))\#(length)}"#)
             }
         }
 

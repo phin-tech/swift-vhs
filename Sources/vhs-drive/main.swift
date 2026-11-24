@@ -94,6 +94,15 @@ enum Focus {
         }
     }
 
+    /// Brings the app forward again, whether or not macOS says it is in front, and waits a moment for it to be.
+    static func again() {
+        guard let app else { return }
+        bringForward(app)
+        let deadline = Date().addingTimeInterval(3)
+        while !app.isActive && Date() < deadline { RunLoop.current.run(until: Date().addingTimeInterval(0.05)) }
+        Thread.sleep(forTimeInterval: 0.3)
+    }
+
     static func giveBack() {
         guard let previous, !previous.isTerminated else { return }
         Focus.previous = nil
@@ -138,7 +147,15 @@ func runScript(_ socket: String, _ text: String) throws {
         }
         do {
             try Focus.before(line, socket: socket)
-            let reply = try send(socket, line)
+            let reply: String
+            do {
+                reply = try send(socket, line)
+            } catch let f as Failure where f.message.contains("needs the app in front") {
+                // The app was said to be in front before it really was (it had just launched, or something took the
+                // front between lines): bring it forward again, and try the line once more.
+                Focus.again()
+                reply = try send(socket, line)
+            }
             if !reply.isEmpty { print(reply) }
         } catch let f as Failure {
             throw Failure(message: "`\(line)`: \(f.message)")

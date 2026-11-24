@@ -84,3 +84,14 @@ import Testing
     #expect(try Drive.Command.parse("size 1280x800") == .size(width: 1280, height: 800))
     #expect(throws: Drive.Problem.self) { try Drive.Command.parse("size 12") }
 }
+
+@Test func aMenuChoiceAndASoundAreEventsDemoreelReads() {
+    var events = Drive.Events(fps: 30)
+    events.note(12, .menu(["Voice", "Generate Take with Chatterbox Turbo"]))
+    events.note(40, .sound(file: "/tmp/take 1.wav", from: 2.5, seconds: nil))
+    events.note(41, .sound(file: "/tmp/x.wav", from: 0, seconds: 3))
+    let json = events.json(frames: 60)
+    #expect(json.contains(#"{"frame":12,"kind":"menu","path":"Voice > Generate Take with Chatterbox Turbo"}"#))
+    #expect(json.contains(#"{"frame":40,"kind":"sound","file":"\/tmp\/take 1.wav","from":2.5}"#))
+    #expect(json.contains(#"{"frame":41,"kind":"sound","file":"\/tmp\/x.wav","from":0,"seconds":3}"#))
+}

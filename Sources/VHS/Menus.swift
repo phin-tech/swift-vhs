@@ -18,6 +18,8 @@ enum Menus {
             }
             guard i == path.count - 1 else { throw Drive.Problem("“\(title)” is an item, not a menu") }
             guard item.isEnabled else { throw Drive.Problem("“\(title)” is disabled") }
+            // Something done, so a recording notes it; before the action, which may not come back at once.
+            Driver.shared.note(.menu(path))
             guard let action = item.action, NSApp.sendAction(action, to: item.target, from: item) else {
                 throw Drive.Problem("“\(title)” did nothing")
             }

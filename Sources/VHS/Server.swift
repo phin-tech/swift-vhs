@@ -13,6 +13,12 @@ public enum VHS {
         Driver.shared.extra[name] = (help, run)
     }
 
+    /// Notes that the app is playing `file` (from `from` seconds into it, for `seconds` or to its end), so a recording
+    /// running now has it as a `sound` event, which demoreel plays under the clip. Does nothing when nothing is recording.
+    @MainActor public static func noteSound(_ file: URL, from: Double = 0, seconds: Double? = nil) {
+        Driver.shared.note(.sound(file: file.path, from: from, seconds: seconds))
+    }
+
     @MainActor public static func start(socket: String? = nil) {
         let env = ProcessInfo.processInfo.environment
         guard let path = socket ?? socketVariables.lazy.compactMap({ env[$0] }).first(where: { !$0.isEmpty }) else { return }

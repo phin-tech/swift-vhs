@@ -21,10 +21,12 @@ final class Driver {
 
     // MARK: Windows
 
-    /// Visible windows with something in them, front to back.
+    /// Visible windows with something in them, front to back. A window that can't become key is left out: a tooltip,
+    /// or the Writing Tools button macOS puts beside selected text, comes and goes in front of the app's own and can't
+    /// take input, so it is never the one commands act on.
     func windows() -> [NSWindow] {
         guard NSApp != nil else { return [] }
-        return NSApp.orderedWindows.filter { $0.isVisible && $0.contentView != nil && $0.frame.width > 1 }
+        return NSApp.orderedWindows.filter { $0.isVisible && $0.contentView != nil && $0.frame.width > 1 && $0.canBecomeKey }
     }
 
     func window() throws -> NSWindow {
@@ -83,7 +85,21 @@ final class Driver {
 
     // MARK: Pictures
 
+    /// Why nothing on screen can be drawn now, if so: a locked screen or a sleeping display gives a blank window, every
+    /// frame, with no error of its own.
+    func screenProblem() -> String? {
+        let session = CGSessionCopyCurrentDictionary() as? [String: Any]
+        if (session?["CGSSessionScreenIsLocked"] as? Bool) == true {
+            return "the screen is locked, so the window draws blank: unlock it, and keep the display awake (caffeinate -d)"
+        }
+        if CGDisplayIsAsleep(CGMainDisplayID()) != 0 {
+            return "the display is asleep, so the window draws blank: wake it, and keep it awake (caffeinate -d)"
+        }
+        return nil
+    }
+
     func shot(to url: URL) throws -> String {
+        if let problem = screenProblem() { throw Drive.Problem(problem) }
         let image = try Capture.image(of: window())
         try FileManager.default.createDirectory(at: url.deletingLastPathComponent(), withIntermediateDirectories: true)
         try Capture.png(image).write(to: url)
@@ -92,6 +108,7 @@ final class Driver {
 
     func record(to folder: URL, fps: Int, events: Bool) throws {
         guard recording == nil else { throw Drive.Problem("already recording; `stop` first") }
+        if let problem = screenProblem() { throw Drive.Problem(problem) }
         try FileManager.default.createDirectory(at: folder, withIntermediateDirectories: true)
         recording = Recording(window: try window(), folder: folder, fps: fps, events: events)
     }
